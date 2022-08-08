@@ -6,6 +6,8 @@
 
 #define SHIFT_MODIFIER_SCAN 9
 #define SHIFT_MODIFIER_RETURN 10
+#define CODE_MODIFIER_SCAN 9
+#define CODE_MODIFIER_RETURN 12
 
 
 void setup()
@@ -37,40 +39,6 @@ void strike_key(uint8_t scan_pin, uint8_t return_pin)
 	digitalWrite(scan_pin, LOW);
 	delay(KEY_AFTER_DELAY_MS);
 }
-/*
-void strike_key_shift(uint8_t scan_pin, uint8_t return_pin)
-{
-	digitalWrite(9, HIGH);
-	digitalWrite(scan_pin, HIGH);
-	curtime = millis();
-	while (millis() < curtime + 30)
-	{
-		//pinMode(return_pin, digitalRead(scan_pin) == LOW);
-		//pinMode(10, digitalRead(9) == LOW);
-
-		if (digitalRead(scan_pin) == LOW)
-		{
-			pinMode(return_pin, OUTPUT);
-			while (digitalRead(scan_pin) == LOW) {}
-			pinMode(return_pin, INPUT);
-		}
-
-		if (digitalRead(9) == LOW)
-		{
-			pinMode(10, OUTPUT);
-			while (digitalRead(9) == LOW) {}
-			pinMode(10, INPUT);
-		}
-
-	}
-	digitalWrite(scan_pin, LOW);
-	digitalWrite(9, LOW);
-
-	delay(60);
-}
-*/
-
-
 
 void strike_key_shift(uint8_t scan_pin, uint8_t return_pin)
 {
@@ -106,23 +74,86 @@ void strike_key_shift(uint8_t scan_pin, uint8_t return_pin)
 		}
 
 	}
+	delay(KEY_AFTER_DELAY_MS);
+
 	digitalWrite(scan_pin, LOW);
 	digitalWrite(SHIFT_MODIFIER_SCAN, LOW);
-
-	delay(KEY_AFTER_DELAY_MS);
 }
 
+void strike_key_code(uint8_t scan_pin, uint8_t return_pin)
+{
+	digitalWrite(CODE_MODIFIER_SCAN, HIGH);
+	digitalWrite(scan_pin, HIGH);
+
+	curtime = millis();
+	while (millis() < curtime + KEY_HOLD_MS)
+	{
+		if (digitalRead(CODE_MODIFIER_SCAN) == LOW)
+		{
+			pinMode(CODE_MODIFIER_RETURN, OUTPUT);
+			while (digitalRead(CODE_MODIFIER_SCAN) == LOW) {}
+			pinMode(CODE_MODIFIER_RETURN, INPUT);
+		}
+	}
+
+	curtime = millis();
+	while (millis() < curtime + KEY_HOLD_MS)
+	{
+		if (digitalRead(scan_pin) == LOW)
+		{
+			pinMode(return_pin, OUTPUT);
+			while (digitalRead(scan_pin) == LOW) {}
+			pinMode(return_pin, INPUT);
+		}
+
+		if (digitalRead(CODE_MODIFIER_SCAN) == LOW)
+		{
+			pinMode(CODE_MODIFIER_RETURN, OUTPUT);
+			while (digitalRead(CODE_MODIFIER_SCAN) == LOW) {}
+			pinMode(CODE_MODIFIER_RETURN, INPUT);
+		}
+
+	}
+	delay(KEY_AFTER_DELAY_MS);
+
+	digitalWrite(scan_pin, LOW);
+	digitalWrite(CODE_MODIFIER_SCAN, LOW);
+}
 
 
 void print_char(char c)
 {
 	switch (c)
 	{
+		// Upper case letters
 		case 'A': strike_key_shift(7, 10); break;
 		case 'B': strike_key_shift(8, 13); break;
 		case 'C': strike_key_shift(8, 12); break;
+		case 'D': strike_key_shift(6, 11); break;
+		case 'E': strike_key_shift(5, 11); break;
+		case 'F': strike_key_shift(7, 12); break;
+		case 'G': strike_key_shift(6, 12); break;
+		case 'H': strike_key_shift(7, 13); break;
+		case 'I': strike_key_shift(4, 14); break;
+		case 'J': strike_key_shift(6, 13); break;
+		case 'K': strike_key_shift(7, 14); break;
+		case 'L': strike_key_shift(6, 14); break;
+		case 'M': strike_key_shift(8, 14); break;
+		case 'N': strike_key_shift(9, 14); break;
+		case 'O': strike_key_shift(5, 14); break;
+		case 'P': strike_key_shift(4, 15); break;
+		case 'Q': strike_key_shift(5, 10); break;
+		case 'R': strike_key_shift(4, 12); break;
+		case 'S': strike_key_shift(7, 11); break;
+		case 'T': strike_key_shift(5, 12); break;
+		case 'U': strike_key_shift(5, 13); break;
+		case 'V': strike_key_shift(9, 13); break;
+		case 'W': strike_key_shift(4, 11); break;
+		case 'X': strike_key_shift(8, 11); break;
+		case 'Y': strike_key_shift(8, 10); break;
+		case 'Z': strike_key_shift(4, 13); break;
 
-
+		// Lower case letters
 		case 'a': strike_key(7, 10); break;
 		case 'b': strike_key(8, 13); break;
 		case 'c': strike_key(8, 12); break;
@@ -150,13 +181,44 @@ void print_char(char c)
 		case 'y': strike_key(8, 10); break;
 		case 'z': strike_key(4, 13); break;
 
+		// Non-shift special characters
 		case '.': strike_key(8, 15); break;
 		case '-': strike_key(8, 16); break;
 		case ',': strike_key(9, 15); break;
 		case ' ': strike_key(9, 16); break;
 		case '+': strike_key(4, 16); break;
+		//case '´': strike_key(3, 16); break; // unicode char
 
-		case '0': strike_key(3, 15); break;
+		// Shifted special characters
+		case '!': strike_key_shift(2, 10); break;
+		case '"': strike_key_shift(3, 11); break;
+		//case '§': strike_key_shift(2, 11); break; // unicode char
+		case '$': strike_key_shift(3, 12); break;
+		case '%': strike_key_shift(2, 12); break;
+		case '&': strike_key_shift(3, 13); break;
+		case '/': strike_key_shift(2, 13); break;
+		case '(': strike_key_shift(3, 14); break;
+		case ')': strike_key_shift(2, 14); break;
+		case '=': strike_key_shift(3, 15); break;
+		case '?': strike_key_shift(2, 15); break;
+		case '*': strike_key_shift(4, 16); break;
+		case '`': strike_key_shift(3, 16); break;
+		case ':': strike_key_shift(8, 15); break;
+		case '_': strike_key_shift(8, 16); break;
+		case ';': strike_key_shift(9, 15); break;
+
+		// Code modified special characters
+		case '|': strike_key_code(5, 14); break;
+		//case '²':  break; // unicode char
+		//case '³':  break; // unicode char
+		//case '°':  break; // unicode char
+		case '\'': strike_key_code(6, 15); break;
+		case '#': strike_key_code(7, 15); break;
+		case '>': strike_key_code(8, 15); break;
+		case '<': strike_key_code(9, 15); break;
+		//case 'µ': strike_key(8, 16); break;  // unicode char
+
+		// Digits
 		case '1': strike_key(2, 10); break;
 		case '2': strike_key(3, 11); break;
 		case '3': strike_key(2, 11); break;
@@ -166,7 +228,9 @@ void print_char(char c)
 		case '7': strike_key(2, 13); break;
 		case '8': strike_key(3, 14); break;
 		case '9': strike_key(2, 14); break;
+		case '0': strike_key(3, 15); break;
 
+		// Control characters
 		case '\n': strike_key(7, 17); break;
 		case '\b': strike_key(3, 17); break;
 
