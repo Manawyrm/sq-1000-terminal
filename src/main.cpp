@@ -1,15 +1,19 @@
 #include <Arduino.h>
 
+#define BAUD_RATE 300
+#define KEY_HOLD_MS 30
+#define KEY_AFTER_DELAY_MS 60
+
+#define SHIFT_MODIFIER_SCAN 9
+#define SHIFT_MODIFIER_RETURN 10
+
+
 void setup()
 {
-	Serial.begin(300);
+	Serial.begin(BAUD_RATE);
 	Serial.setTimeout(5000);
 
-	for (uint8_t i = 2; i < 10; i++)
-	{
-		pinMode(i, INPUT);
-	}
-	for (uint8_t i = 10; i < 18; i++)
+	for (uint8_t i = 2; i < 18; i++)
 	{
 		pinMode(i, INPUT);
 	}
@@ -21,7 +25,7 @@ void strike_key(uint8_t scan_pin, uint8_t return_pin)
 {
 	digitalWrite(scan_pin, HIGH);
 	curtime = millis();
-	while (millis() < curtime + 30)
+	while (millis() < curtime + KEY_HOLD_MS)
 	{
 		if (digitalRead(scan_pin) == LOW)
 		{
@@ -31,24 +35,81 @@ void strike_key(uint8_t scan_pin, uint8_t return_pin)
 		}
 	}
 	digitalWrite(scan_pin, LOW);
-	delay(60);
+	delay(KEY_AFTER_DELAY_MS);
 }
-
+/*
 void strike_key_shift(uint8_t scan_pin, uint8_t return_pin)
 {
-	digitalWrite(7, HIGH);
+	digitalWrite(9, HIGH);
 	digitalWrite(scan_pin, HIGH);
 	curtime = millis();
 	while (millis() < curtime + 30)
 	{
+		//pinMode(return_pin, digitalRead(scan_pin) == LOW);
+		//pinMode(10, digitalRead(9) == LOW);
 
-		pinMode(return_pin, digitalRead(scan_pin) == LOW);
+		if (digitalRead(scan_pin) == LOW)
+		{
+			pinMode(return_pin, OUTPUT);
+			while (digitalRead(scan_pin) == LOW) {}
+			pinMode(return_pin, INPUT);
+		}
+
+		if (digitalRead(9) == LOW)
+		{
+			pinMode(10, OUTPUT);
+			while (digitalRead(9) == LOW) {}
+			pinMode(10, INPUT);
+		}
 
 	}
 	digitalWrite(scan_pin, LOW);
-	digitalWrite(7, LOW);
+	digitalWrite(9, LOW);
 
 	delay(60);
+}
+*/
+
+
+
+void strike_key_shift(uint8_t scan_pin, uint8_t return_pin)
+{
+	digitalWrite(SHIFT_MODIFIER_SCAN, HIGH);
+	digitalWrite(scan_pin, HIGH);
+
+	curtime = millis();
+	while (millis() < curtime + KEY_HOLD_MS)
+	{
+		if (digitalRead(SHIFT_MODIFIER_SCAN) == LOW)
+		{
+			pinMode(SHIFT_MODIFIER_RETURN, OUTPUT);
+			while (digitalRead(SHIFT_MODIFIER_SCAN) == LOW) {}
+			pinMode(SHIFT_MODIFIER_RETURN, INPUT);
+		}
+	}
+
+	curtime = millis();
+	while (millis() < curtime + KEY_HOLD_MS)
+	{
+		if (digitalRead(scan_pin) == LOW)
+		{
+			pinMode(return_pin, OUTPUT);
+			while (digitalRead(scan_pin) == LOW) {}
+			pinMode(return_pin, INPUT);
+		}
+
+		if (digitalRead(SHIFT_MODIFIER_SCAN) == LOW)
+		{
+			pinMode(SHIFT_MODIFIER_RETURN, OUTPUT);
+			while (digitalRead(SHIFT_MODIFIER_SCAN) == LOW) {}
+			pinMode(SHIFT_MODIFIER_RETURN, INPUT);
+		}
+
+	}
+	digitalWrite(scan_pin, LOW);
+	digitalWrite(SHIFT_MODIFIER_SCAN, LOW);
+
+	delay(KEY_AFTER_DELAY_MS);
 }
 
 
