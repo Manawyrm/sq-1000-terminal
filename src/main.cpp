@@ -2,7 +2,7 @@
 
 #define BAUD_RATE 300
 #define KEY_HOLD_MS 30
-#define KEY_AFTER_DELAY_MS 60
+#define KEY_AFTER_DELAY_MS 90
 
 #define SHIFT_MODIFIER_SCAN 9
 #define SHIFT_MODIFIER_RETURN 10
@@ -188,7 +188,11 @@ void print_char(char c)
 		case '=': strike_key_shift(3, 15); break;
 		case '?': strike_key_shift(2, 15); break;
 		case '*': strike_key_shift(4, 16); break;
-		case '`': strike_key_shift(3, 16); break;
+		case '`': 
+			// backticks don't advance the cursor on their own
+			strike_key_shift(3, 16); 
+			strike_key(9, 16);
+			break;
 		case ':': strike_key_shift(8, 15); break;
 		case '_': strike_key_shift(8, 16); break;
 		case ';': strike_key_shift(9, 15); break;
@@ -252,9 +256,9 @@ void print_char(char c)
 		case '9': strike_key(2, 14); break;
 		case '0': strike_key(3, 15); break;
 
-
+		// Hacks
 		case '~': strike_key(5, 15); break;
-
+		case '^': strike_key_code(2, 13); break;
 
 		// Control characters
 		case '\n': strike_key(7, 17); break;
