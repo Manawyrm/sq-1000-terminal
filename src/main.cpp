@@ -23,101 +23,87 @@ void setup()
 
 unsigned long curtime = 0;
 
-void strike_key(uint8_t scan_pin, uint8_t return_pin)
+void strike_key(uint8_t scan_pin, uint8_t return_pin, uint8_t modifier_scan, uint8_t modifier_return)
 {
-	digitalWrite(scan_pin, HIGH);
-	curtime = millis();
-	while (millis() < curtime + KEY_HOLD_MS)
+	int pinState;
+
+	if (modifier_scan)
 	{
-		if (digitalRead(scan_pin) == LOW)
+		digitalWrite(modifier_scan, HIGH);
+	}
+	digitalWrite(scan_pin, HIGH);
+
+	if (modifier_scan)
+	{
+		curtime = millis();
+		while (millis() < curtime + KEY_HOLD_MS)
 		{
-			pinMode(return_pin, OUTPUT);
-			while (digitalRead(scan_pin) == LOW) {}
-			pinMode(return_pin, INPUT);
+			pinMode(modifier_return, !digitalRead(modifier_scan));
 		}
 	}
+
+	curtime = millis();
+	bool key_fetched = false;
+	while (millis() < curtime + KEY_HOLD_MS)
+	{
+		bool modifier_return_state;
+		if (modifier_scan)
+		{
+			pinState = digitalRead(modifier_scan);
+			modifier_return_state = !pinState;
+		}
+
+		// if both the modifier and the pin itself use the same return pin,
+		// we need to logical-OR those together
+		if (modifier_return == return_pin)
+		{
+			pinState = digitalRead(scan_pin);
+			pinMode(return_pin, (!pinState) || modifier_return_state);
+		}
+		else
+		{
+			if (modifier_scan)
+			{
+				pinMode(modifier_return, !pinState);
+			}
+			pinState = digitalRead(scan_pin);
+			pinMode(return_pin, !pinState);
+		}
+
+		
+		if (!pinState)
+		{
+			key_fetched = true;
+		}
+	}
+	
+	if (modifier_scan)
+	{
+		pinMode(modifier_return, INPUT);
+	}
+	pinMode(return_pin, INPUT);
 	digitalWrite(scan_pin, LOW);
+	if (modifier_scan)
+	{
+		digitalWrite(modifier_scan, LOW);
+	}
+
 	delay(KEY_AFTER_DELAY_MS);
+}
+
+void strike_key(uint8_t scan_pin, uint8_t return_pin)
+{
+	strike_key(scan_pin, return_pin, 0, 0);
 }
 
 void strike_key_shift(uint8_t scan_pin, uint8_t return_pin)
 {
-	digitalWrite(SHIFT_MODIFIER_SCAN, HIGH);
-	digitalWrite(scan_pin, HIGH);
-
-	curtime = millis();
-	while (millis() < curtime + KEY_HOLD_MS)
-	{
-		if (digitalRead(SHIFT_MODIFIER_SCAN) == LOW)
-		{
-			pinMode(SHIFT_MODIFIER_RETURN, OUTPUT);
-			while (digitalRead(SHIFT_MODIFIER_SCAN) == LOW) {}
-			pinMode(SHIFT_MODIFIER_RETURN, INPUT);
-		}
-	}
-
-	curtime = millis();
-	while (millis() < curtime + KEY_HOLD_MS)
-	{
-		if (digitalRead(scan_pin) == LOW)
-		{
-			pinMode(return_pin, OUTPUT);
-			while (digitalRead(scan_pin) == LOW) {}
-			pinMode(return_pin, INPUT);
-		}
-
-		if (digitalRead(SHIFT_MODIFIER_SCAN) == LOW)
-		{
-			pinMode(SHIFT_MODIFIER_RETURN, OUTPUT);
-			while (digitalRead(SHIFT_MODIFIER_SCAN) == LOW) {}
-			pinMode(SHIFT_MODIFIER_RETURN, INPUT);
-		}
-
-	}
-	delay(KEY_AFTER_DELAY_MS);
-
-	digitalWrite(scan_pin, LOW);
-	digitalWrite(SHIFT_MODIFIER_SCAN, LOW);
+	strike_key(scan_pin, return_pin, SHIFT_MODIFIER_SCAN, SHIFT_MODIFIER_RETURN);
 }
 
 void strike_key_code(uint8_t scan_pin, uint8_t return_pin)
 {
-	digitalWrite(CODE_MODIFIER_SCAN, HIGH);
-	digitalWrite(scan_pin, HIGH);
-
-	curtime = millis();
-	while (millis() < curtime + KEY_HOLD_MS)
-	{
-		if (digitalRead(CODE_MODIFIER_SCAN) == LOW)
-		{
-			pinMode(CODE_MODIFIER_RETURN, OUTPUT);
-			while (digitalRead(CODE_MODIFIER_SCAN) == LOW) {}
-			pinMode(CODE_MODIFIER_RETURN, INPUT);
-		}
-	}
-
-	curtime = millis();
-	while (millis() < curtime + KEY_HOLD_MS)
-	{
-		if (digitalRead(scan_pin) == LOW)
-		{
-			pinMode(return_pin, OUTPUT);
-			while (digitalRead(scan_pin) == LOW) {}
-			pinMode(return_pin, INPUT);
-		}
-
-		if (digitalRead(CODE_MODIFIER_SCAN) == LOW)
-		{
-			pinMode(CODE_MODIFIER_RETURN, OUTPUT);
-			while (digitalRead(CODE_MODIFIER_SCAN) == LOW) {}
-			pinMode(CODE_MODIFIER_RETURN, INPUT);
-		}
-
-	}
-	delay(KEY_AFTER_DELAY_MS);
-
-	digitalWrite(scan_pin, LOW);
-	digitalWrite(CODE_MODIFIER_SCAN, LOW);
+	strike_key(scan_pin, return_pin, CODE_MODIFIER_SCAN, CODE_MODIFIER_RETURN);
 }
 
 
@@ -218,6 +204,42 @@ void print_char(char c)
 		case '<': strike_key_code(9, 15); break;
 		//case 'µ': strike_key(8, 16); break;  // unicode char
 
+		// Missing special characters / Workarounds
+		case '[': 
+			// enable underscored text
+			strike_key_code(5, 13);
+			// strike (
+			strike_key_shift(3, 14);
+			// disable underscored text
+			strike_key_code(5, 13);
+			break;
+		case ']': 
+			// enable underscored text
+			strike_key_code(5, 13);
+			// strike )
+			strike_key_shift(2, 14);
+			// disable underscored text
+			strike_key_code(5, 13);
+			break;
+
+		case '{':
+			// strike (
+			strike_key_shift(3, 14);
+			// go back
+			strike_key(2, 16);
+			// strike <
+			strike_key_code(9, 15);
+			break;
+
+		case '}':
+			// strike )
+			strike_key_shift(2, 14);
+			// go back
+			strike_key(2, 16);
+			// strike >
+			strike_key_code(8, 15);
+			break;
+
 		// Digits
 		case '1': strike_key(2, 10); break;
 		case '2': strike_key(3, 11); break;
@@ -230,9 +252,14 @@ void print_char(char c)
 		case '9': strike_key(2, 14); break;
 		case '0': strike_key(3, 15); break;
 
+
+		case '~': strike_key(5, 15); break;
+
+
 		// Control characters
 		case '\n': strike_key(7, 17); break;
-		case '\b': strike_key(3, 17); break;
+		//case '\b': strike_key(3, 17); break; // backspace with correction fluid
+		case '\b': strike_key(2, 16); break; // regular backspace
 
 		default: break;
 	}
@@ -281,6 +308,6 @@ void loop()
 		print_char(data);
 		//strike_key(data, data2);
 	}
-	
+
 	//delay(10);
 }
