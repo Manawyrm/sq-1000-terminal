@@ -1,0 +1,10 @@
+#pragma once
+
+#define BAUD_RATE 300
+#define KEY_HOLD_MS 30
+#define KEY_AFTER_DELAY_MS 90
+
+#define SHIFT_MODIFIER_SCAN 9
+#define SHIFT_MODIFIER_RETURN 10
+#define CODE_MODIFIER_SCAN 9
+#define CODE_MODIFIER_RETURN 12
