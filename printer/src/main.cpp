@@ -1,16 +1,22 @@
 #include <Arduino.h>
 #include "config.h"
 #include "printer.h"
+#include "terminal.h"
 
 void setup()
 {
 	Serial.begin(BAUD_RATE);
 	Serial.setTimeout(5000);
 
-	for (uint8_t i = 2; i < 18; i++)
-	{
-		pinMode(i, INPUT);
-	}
+	
+	printer_setup();
+
+	delay(10000);
+
+	function_key_code(2, 13); // Set typewriter to Pitch 12
+	//function_key_code(3, 14); // Set typewriter to Pitch 15
+	function_key_code(8, 17); // Carriage return
+
 }
 
 void loop()
@@ -50,12 +56,8 @@ void loop()
 	delay(500);
 	*/ 
 
-	if (Serial.available())
-	{
-		char data = Serial.read();
-		print_char(data);
-		//strike_key(data, data2);
-	}
+	handle_serial();
+	
 
 	//delay(10);
 }
